@@ -31,6 +31,13 @@ final class Store: ObservableObject {
         items.removeAll { $0.id == item.id }
     }
 
+    func moveUpNext(from source: IndexSet, to destination: Int) {
+        var upNext = items.filter { !$0.isDone }
+        let finished = items.filter { $0.isDone }
+        upNext.move(fromOffsets: source, toOffset: destination)
+        items = upNext + finished
+    }
+
     private func load() {
         guard let data = try? Data(contentsOf: fileURL) else { return }
         items = (try? JSONDecoder().decode([Item].self, from: data)) ?? []

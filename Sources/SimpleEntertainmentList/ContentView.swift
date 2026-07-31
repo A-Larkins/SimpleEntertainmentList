@@ -21,8 +21,11 @@ struct ContentView: View {
             List {
                 if !upNext.isEmpty {
                     Section("Up Next") {
-                        ForEach(upNext) { item in
-                            row(for: item)
+                        ForEach(Array(upNext.enumerated()), id: \.element.id) { index, item in
+                            row(for: item, position: index + 1)
+                        }
+                        .onMove { source, destination in
+                            store.moveUpNext(from: source, to: destination)
                         }
                     }
                 }
@@ -30,7 +33,7 @@ struct ContentView: View {
                 if !finished.isEmpty {
                     Section("Finished") {
                         ForEach(finished) { item in
-                            row(for: item)
+                            row(for: item, position: nil)
                         }
                     }
                 }
@@ -88,8 +91,15 @@ struct ContentView: View {
         newTitle = ""
     }
 
-    private func row(for item: Item) -> some View {
+    private func row(for item: Item, position: Int?) -> some View {
         HStack {
+            if let position {
+                Text("\(position)")
+                    .font(.system(.body, design: .rounded).monospacedDigit())
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 18, alignment: .trailing)
+            }
+
             Button {
                 store.toggleDone(item)
             } label: {
