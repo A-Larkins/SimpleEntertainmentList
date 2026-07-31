@@ -4,6 +4,7 @@ struct ShowRowView: View {
     @ObservedObject var store: Store
     let item: Item
     @State private var newEpisodeLabel: String = ""
+    @State private var isHovering = false
 
     private var pendingToday: [Episode] {
         item.pendingEpisodesForToday()
@@ -23,6 +24,8 @@ struct ShowRowView: View {
                 Spacer()
 
                 goalStepper
+
+                deleteButton
             }
 
             if pendingToday.isEmpty && !item.episodes.isEmpty {
@@ -38,12 +41,21 @@ struct ShowRowView: View {
 
             addEpisodeField
         }
-        .padding(.vertical, 4)
-        .swipeActions {
-            Button("Delete", role: .destructive) {
-                store.delete(item)
-            }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 18)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
+    }
+
+    private var deleteButton: some View {
+        Button {
+            store.delete(item)
+        } label: {
+            Image(systemName: "trash")
+                .foregroundStyle(.secondary)
         }
+        .buttonStyle(.plain)
+        .opacity(isHovering ? 1 : 0)
     }
 
     private var goalStepper: some View {
@@ -72,29 +84,7 @@ struct ShowRowView: View {
     }
 
     private func episodeRow(_ episode: Episode) -> some View {
-        HStack(spacing: 10) {
-            Button {
-                store.toggleEpisodeWatched(item: item, episode: episode)
-            } label: {
-                Image(systemName: episode.watched ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(episode.watched ? Theme.accent : .secondary)
-            }
-            .buttonStyle(.plain)
-
-            Text(episode.label)
-                .font(.system(size: 15))
-                .strikethrough(episode.watched)
-                .foregroundStyle(episode.watched ? .secondary : .primary)
-
-            Spacer()
-        }
-        .padding(.leading, 28)
-        .contentShape(Rectangle())
-        .swipeActions {
-            Button("Delete", role: .destructive) {
-                store.deleteEpisode(item: item, episode: episode)
-            }
-        }
+        EpisodeRow(store: store, item: item, episode: episode)
     }
 
     private var addEpisodeField: some View {
@@ -113,5 +103,44 @@ struct ShowRowView: View {
                 }
         }
         .padding(.leading, 28)
+    }
+}
+
+private struct EpisodeRow: View {
+    @ObservedObject var store: Store
+    let item: Item
+    let episode: Episode
+    @State private var isHovering = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Button {
+                store.toggleEpisodeWatched(item: item, episode: episode)
+            } label: {
+                Image(systemName: episode.watched ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(episode.watched ? Theme.accent : .secondary)
+            }
+            .buttonStyle(.plain)
+
+            Text(episode.label)
+                .font(.system(size: 15))
+                .strikethrough(episode.watched)
+                .foregroundStyle(episode.watched ? .secondary : .primary)
+
+            Spacer()
+
+            Button {
+                store.deleteEpisode(item: item, episode: episode)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .opacity(isHovering ? 1 : 0)
+        }
+        .padding(.leading, 28)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
     }
 }

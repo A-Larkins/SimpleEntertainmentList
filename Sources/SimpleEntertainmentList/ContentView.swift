@@ -6,7 +6,7 @@ struct ContentView: View {
     @State private var newKind: ItemKind = .book
 
     private var todayItems: [Item] {
-        store.items.filter { $0.kind == .show || (!$0.isFinished && Calendar.current.isDateInToday($0.scheduledDate)) }
+        store.items.filter { $0.kind == .show || !$0.isFinished }
     }
 
     private var finishedItems: [Item] {
@@ -17,40 +17,48 @@ struct ContentView: View {
         VStack(spacing: 0) {
             header
             addBar
+            Divider()
 
-            List {
-                if !todayItems.isEmpty {
-                    Section("Today") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    if !todayItems.isEmpty {
+                        sectionHeader("Today")
                         ForEach(todayItems) { item in
                             row(for: item)
-                        }
-                        .onMove { source, destination in
-                            store.moveToday(from: source, to: destination)
+                            Divider().padding(.leading, 18)
                         }
                     }
-                }
 
-                if !finishedItems.isEmpty {
-                    Section("Finished") {
+                    if !finishedItems.isEmpty {
+                        sectionHeader("Finished")
                         ForEach(finishedItems) { item in
                             row(for: item)
+                            Divider().padding(.leading, 18)
                         }
                     }
-                }
 
-                if store.items.isEmpty {
-                    Text("Nothing on the list yet — add a book, show, movie, or game above.")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, 8)
+                    if store.items.isEmpty {
+                        Text("Nothing on the list yet — add a book, audiobook, show, movie, or game above.")
+                            .font(.system(size: 15))
+                            .foregroundStyle(.secondary)
+                            .padding(18)
+                    }
                 }
             }
-            .listStyle(.inset)
-            .scrollContentBackground(.hidden)
             .background(Theme.paper)
         }
         .frame(minWidth: 480, minHeight: 560)
         .background(Theme.paper)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .tracking(0.6)
+            .padding(.horizontal, 18)
+            .padding(.top, 14)
+            .padding(.bottom, 6)
     }
 
     private var header: some View {
@@ -73,7 +81,7 @@ struct ContentView: View {
                 }
             }
             .labelsHidden()
-            .frame(width: 120)
+            .frame(width: 140)
             .tint(Theme.accent)
 
             TextField("Add a title…", text: $newTitle)
@@ -98,11 +106,17 @@ struct ContentView: View {
         if item.kind == .show {
             ShowRowView(store: store, item: item)
         } else {
-            simpleRow(for: item)
+            SimpleRowView(store: store, item: item)
         }
     }
+}
 
-    private func simpleRow(for item: Item) -> some View {
+private struct SimpleRowView: View {
+    @ObservedObject var store: Store
+    let item: Item
+    @State private var isHovering = false
+
+    var body: some View {
         HStack(spacing: 10) {
             Button {
                 store.toggleFinished(item)
@@ -122,13 +136,19 @@ struct ContentView: View {
                 .foregroundStyle(item.isFinished ? .secondary : .primary)
 
             Spacer()
-        }
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .swipeActions {
-            Button("Delete", role: .destructive) {
+
+            Button {
                 store.delete(item)
+            } label: {
+                Image(systemName: "trash")
+                    .foregroundStyle(.secondary)
             }
+            .buttonStyle(.plain)
+            .opacity(isHovering ? 1 : 0)
         }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 18)
+        .contentShape(Rectangle())
+        .onHover { isHovering = $0 }
     }
 }

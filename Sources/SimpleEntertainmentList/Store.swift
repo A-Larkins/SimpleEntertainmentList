@@ -7,7 +7,6 @@ final class Store: ObservableObject {
     }
 
     private let fileURL: URL
-    private let calendar = Calendar.current
 
     init() {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -15,7 +14,6 @@ final class Store: ObservableObject {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         fileURL = dir.appendingPathComponent("items.json")
         load()
-        rollForward()
     }
 
     func add(title: String, kind: ItemKind) {
@@ -56,29 +54,6 @@ final class Store: ObservableObject {
     func deleteEpisode(item: Item, episode: Episode) {
         guard let itemIndex = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[itemIndex].episodes.removeAll { $0.id == episode.id }
-    }
-
-    /// Reorders the top-level blocks (simple items + shows) shown in Today.
-    func moveToday(from source: IndexSet, to destination: Int) {
-        func isTodayActive(_ item: Item) -> Bool {
-            item.kind == .show || (!item.isFinished && calendar.isDateInToday(item.scheduledDate))
-        }
-        var today = items.filter(isTodayActive)
-        let rest = items.filter { !isTodayActive($0) }
-        today.move(fromOffsets: source, toOffset: destination)
-        items = today + rest
-    }
-
-    /// Runs once at launch: simple items left unfinished from a previous day roll onto today.
-    private func rollForward() {
-        let today = calendar.startOfDay(for: Date())
-        for index in items.indices {
-            guard items[index].kind != .show, !items[index].isFinished else { continue }
-            let scheduledDay = calendar.startOfDay(for: items[index].scheduledDate)
-            if scheduledDay < today {
-                items[index].scheduledDate = today
-            }
-        }
     }
 
     private func load() {

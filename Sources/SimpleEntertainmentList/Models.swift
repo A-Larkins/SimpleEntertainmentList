@@ -2,6 +2,7 @@ import Foundation
 
 enum ItemKind: String, Codable, CaseIterable, Identifiable {
     case book = "Book"
+    case audiobook = "Audiobook"
     case movie = "Movie"
     case show = "Show"
     case sports = "Sports"
@@ -11,6 +12,7 @@ enum ItemKind: String, Codable, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .book: return "book.closed"
+        case .audiobook: return "headphones"
         case .movie: return "film"
         case .show: return "tv"
         case .sports: return "sportscourt"
@@ -29,14 +31,13 @@ struct Item: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var title: String
     var kind: ItemKind
-    var scheduledDate: Date = Calendar.current.startOfDay(for: Date())
     var isFinished: Bool = false
     var dailyEpisodeGoal: Int = 1
     var episodes: [Episode] = []
     var dateAdded: Date = Date()
 
     enum CodingKeys: String, CodingKey {
-        case id, title, kind, scheduledDate, isFinished, dailyEpisodeGoal, episodes, dateAdded
+        case id, title, kind, isFinished, dailyEpisodeGoal, episodes, dateAdded
         case legacyIsDone = "isDone"
     }
 
@@ -53,8 +54,6 @@ struct Item: Codable, Identifiable, Equatable {
         dateAdded = try c.decodeIfPresent(Date.self, forKey: .dateAdded) ?? Date()
 
         let legacyDone = try c.decodeIfPresent(Bool.self, forKey: .legacyIsDone) ?? false
-        scheduledDate = try c.decodeIfPresent(Date.self, forKey: .scheduledDate)
-            ?? Calendar.current.startOfDay(for: Date())
         isFinished = try c.decodeIfPresent(Bool.self, forKey: .isFinished) ?? legacyDone
         dailyEpisodeGoal = try c.decodeIfPresent(Int.self, forKey: .dailyEpisodeGoal) ?? 1
         episodes = try c.decodeIfPresent([Episode].self, forKey: .episodes) ?? []
@@ -65,7 +64,6 @@ struct Item: Codable, Identifiable, Equatable {
         try c.encode(id, forKey: .id)
         try c.encode(title, forKey: .title)
         try c.encode(kind, forKey: .kind)
-        try c.encode(scheduledDate, forKey: .scheduledDate)
         try c.encode(isFinished, forKey: .isFinished)
         try c.encode(dailyEpisodeGoal, forKey: .dailyEpisodeGoal)
         try c.encode(episodes, forKey: .episodes)
