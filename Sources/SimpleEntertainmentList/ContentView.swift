@@ -6,11 +6,11 @@ struct ContentView: View {
     @State private var newKind: ItemKind = .book
 
     private var todayItems: [Item] {
-        store.items.filter { $0.kind == .show || !$0.isFinished }
+        store.items.filter { $0.kind.tracksSequence || !$0.isFinished }
     }
 
     private var finishedItems: [Item] {
-        store.items.filter { $0.kind != .show && $0.isFinished }
+        store.items.filter { !$0.kind.tracksSequence && $0.isFinished }
     }
 
     var body: some View {
@@ -103,8 +103,8 @@ struct ContentView: View {
 
     @ViewBuilder
     private func row(for item: Item) -> some View {
-        if item.kind == .show {
-            ShowRowView(store: store, item: item)
+        if item.kind.tracksSequence {
+            SequencedRowView(store: store, item: item)
         } else {
             SimpleRowView(store: store, item: item)
         }

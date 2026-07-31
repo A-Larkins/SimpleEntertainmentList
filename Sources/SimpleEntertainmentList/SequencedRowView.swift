@@ -1,10 +1,14 @@
 import SwiftUI
 
-struct ShowRowView: View {
+/// Row for anything worked through in numbered pieces with a daily pace —
+/// episodes for a show, chapters for a book or audiobook.
+struct SequencedRowView: View {
     @ObservedObject var store: Store
     let item: Item
-    @State private var newEpisodeLabel: String = ""
+    @State private var newUnitLabel: String = ""
     @State private var isHovering = false
+
+    private var unitName: String { item.kind.unitName }
 
     private var pendingToday: [Episode] {
         item.pendingEpisodesForToday()
@@ -35,11 +39,11 @@ struct ShowRowView: View {
                     .padding(.leading, 28)
             }
 
-            ForEach(pendingToday) { episode in
-                episodeRow(episode)
+            ForEach(pendingToday) { unit in
+                unitRow(unit)
             }
 
-            addEpisodeField
+            addUnitField
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 18)
@@ -83,54 +87,54 @@ struct ShowRowView: View {
         .foregroundStyle(Theme.accent)
     }
 
-    private func episodeRow(_ episode: Episode) -> some View {
-        EpisodeRow(store: store, item: item, episode: episode)
+    private func unitRow(_ unit: Episode) -> some View {
+        SequenceUnitRow(store: store, item: item, unit: unit)
     }
 
-    private var addEpisodeField: some View {
+    private var addUnitField: some View {
         HStack(spacing: 8) {
             Image(systemName: "plus")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .frame(width: 14)
 
-            TextField("Add episode…", text: $newEpisodeLabel)
+            TextField("Add \(unitName)…", text: $newUnitLabel)
                 .textFieldStyle(.plain)
                 .font(.system(size: 14))
                 .onSubmit {
-                    store.addEpisode(to: item, label: newEpisodeLabel)
-                    newEpisodeLabel = ""
+                    store.addEpisode(to: item, label: newUnitLabel)
+                    newUnitLabel = ""
                 }
         }
         .padding(.leading, 28)
     }
 }
 
-private struct EpisodeRow: View {
+private struct SequenceUnitRow: View {
     @ObservedObject var store: Store
     let item: Item
-    let episode: Episode
+    let unit: Episode
     @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 10) {
             Button {
-                store.toggleEpisodeWatched(item: item, episode: episode)
+                store.toggleEpisodeWatched(item: item, episode: unit)
             } label: {
-                Image(systemName: episode.watched ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(episode.watched ? Theme.accent : .secondary)
+                Image(systemName: unit.watched ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(unit.watched ? Theme.accent : .secondary)
             }
             .buttonStyle(.plain)
 
-            Text(episode.label)
+            Text(unit.label)
                 .font(.system(size: 15))
-                .strikethrough(episode.watched)
-                .foregroundStyle(episode.watched ? .secondary : .primary)
+                .strikethrough(unit.watched)
+                .foregroundStyle(unit.watched ? .secondary : .primary)
 
             Spacer()
 
             Button {
-                store.deleteEpisode(item: item, episode: episode)
+                store.deleteEpisode(item: item, episode: unit)
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 12))

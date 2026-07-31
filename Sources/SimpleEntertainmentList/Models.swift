@@ -18,6 +18,19 @@ enum ItemKind: String, Codable, CaseIterable, Identifiable {
         case .sports: return "sportscourt"
         }
     }
+
+    /// Whether this kind is worked through in numbered pieces (episodes, chapters)
+    /// with a daily pace, rather than as a single sitting.
+    var tracksSequence: Bool {
+        switch self {
+        case .show, .book, .audiobook: return true
+        case .movie, .sports: return false
+        }
+    }
+
+    var unitName: String {
+        self == .show ? "episode" : "chapter"
+    }
 }
 
 struct Episode: Codable, Identifiable, Equatable {
