@@ -28,8 +28,11 @@ enum ItemKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var unitName: String {
-        self == .show ? "episode" : "chapter"
+    /// Show episodes are a concrete, fixed unit. Books/audiobooks are freeform —
+    /// a chunk could be "4 chapters", "25 pages", whatever the day calls for —
+    /// so there's no fixed noun for them.
+    var unitName: String? {
+        self == .show ? "episode" : nil
     }
 }
 

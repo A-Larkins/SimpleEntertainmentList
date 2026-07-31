@@ -8,7 +8,12 @@ struct SequencedRowView: View {
     @State private var newUnitLabel: String = ""
     @State private var isHovering = false
 
-    private var unitName: String { item.kind.unitName }
+    private var addPlaceholder: String {
+        if let unitName = item.kind.unitName {
+            return "Add \(unitName)…"
+        }
+        return "Add today's bit — a chapter, some pages, whatever…"
+    }
 
     private var pendingToday: [Episode] {
         item.pendingEpisodesForToday()
@@ -98,7 +103,7 @@ struct SequencedRowView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 14)
 
-            TextField("Add \(unitName)…", text: $newUnitLabel)
+            TextField(addPlaceholder, text: $newUnitLabel)
                 .textFieldStyle(.plain)
                 .font(.system(size: 14))
                 .onSubmit {
