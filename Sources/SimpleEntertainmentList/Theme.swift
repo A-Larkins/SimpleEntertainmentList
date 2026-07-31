@@ -25,5 +25,5 @@ enum Theme {
             : NSColor(red: 0.937, green: 0.902, blue: 0.847, alpha: 1)
     })
 
-    static let displayFont = Font.custom("Georgia", size: 20)
+    static let displayFont = Font.custom("Georgia", size: 24)
 }

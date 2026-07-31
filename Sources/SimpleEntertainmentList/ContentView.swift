@@ -5,12 +5,12 @@ struct ContentView: View {
     @State private var newTitle: String = ""
     @State private var newKind: ItemKind = .book
 
-    private var upNext: [Item] {
-        store.items.filter { !$0.isDone }
+    private var todayItems: [Item] {
+        store.items.filter { $0.kind == .show || (!$0.isFinished && Calendar.current.isDateInToday($0.scheduledDate)) }
     }
 
-    private var finished: [Item] {
-        store.items.filter { $0.isDone }
+    private var finishedItems: [Item] {
+        store.items.filter { $0.kind != .show && $0.isFinished }
     }
 
     var body: some View {
@@ -19,27 +19,28 @@ struct ContentView: View {
             addBar
 
             List {
-                if !upNext.isEmpty {
-                    Section("Up Next") {
-                        ForEach(Array(upNext.enumerated()), id: \.element.id) { index, item in
-                            row(for: item, position: index + 1)
+                if !todayItems.isEmpty {
+                    Section("Today") {
+                        ForEach(todayItems) { item in
+                            row(for: item)
                         }
                         .onMove { source, destination in
-                            store.moveUpNext(from: source, to: destination)
+                            store.moveToday(from: source, to: destination)
                         }
                     }
                 }
 
-                if !finished.isEmpty {
+                if !finishedItems.isEmpty {
                     Section("Finished") {
-                        ForEach(finished) { item in
-                            row(for: item, position: nil)
+                        ForEach(finishedItems) { item in
+                            row(for: item)
                         }
                     }
                 }
 
                 if store.items.isEmpty {
-                    Text("Nothing on the list yet — add a book, movie, or show above.")
+                    Text("Nothing on the list yet — add a book, show, movie, or game above.")
+                        .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 8)
                 }
@@ -48,7 +49,7 @@ struct ContentView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.paper)
         }
-        .frame(minWidth: 440, minHeight: 500)
+        .frame(minWidth: 480, minHeight: 560)
         .background(Theme.paper)
     }
 
@@ -59,9 +60,9 @@ struct ContentView: View {
                 .foregroundStyle(Theme.ink)
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 2)
+        .padding(.horizontal, 18)
+        .padding(.top, 16)
+        .padding(.bottom, 4)
     }
 
     private var addBar: some View {
@@ -72,18 +73,19 @@ struct ContentView: View {
                 }
             }
             .labelsHidden()
-            .frame(width: 110)
+            .frame(width: 120)
             .tint(Theme.accent)
 
             TextField("Add a title…", text: $newTitle)
                 .textFieldStyle(.roundedBorder)
+                .font(.system(size: 15))
                 .onSubmit(addItem)
 
             Button("Add", action: addItem)
                 .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                 .tint(Theme.accent)
         }
-        .padding(12)
+        .padding(14)
     }
 
     private func addItem() {
@@ -91,33 +93,37 @@ struct ContentView: View {
         newTitle = ""
     }
 
-    private func row(for item: Item, position: Int?) -> some View {
-        HStack {
-            if let position {
-                Text("\(position)")
-                    .font(.system(.body, design: .rounded).monospacedDigit())
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 18, alignment: .trailing)
-            }
+    @ViewBuilder
+    private func row(for item: Item) -> some View {
+        if item.kind == .show {
+            ShowRowView(store: store, item: item)
+        } else {
+            simpleRow(for: item)
+        }
+    }
 
+    private func simpleRow(for item: Item) -> some View {
+        HStack(spacing: 10) {
             Button {
-                store.toggleDone(item)
+                store.toggleFinished(item)
             } label: {
-                Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(item.isDone ? Theme.accent : .secondary)
+                Image(systemName: item.isFinished ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(item.isFinished ? Theme.accent : .secondary)
             }
             .buttonStyle(.plain)
 
             Image(systemName: item.kind.symbol)
                 .foregroundStyle(.secondary)
-                .frame(width: 18)
+                .frame(width: 20)
 
             Text(item.title)
-                .strikethrough(item.isDone)
-                .foregroundStyle(item.isDone ? .secondary : .primary)
+                .font(.system(size: 17))
+                .strikethrough(item.isFinished)
+                .foregroundStyle(item.isFinished ? .secondary : .primary)
 
             Spacer()
         }
+        .padding(.vertical, 2)
         .contentShape(Rectangle())
         .swipeActions {
             Button("Delete", role: .destructive) {
